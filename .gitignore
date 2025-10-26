@@ -1,0 +1,9 @@
+node_modules/
+*.zip
+.env
+.DS_Store
+*.log
+.aws-sam/
+.vscode/
+*.pem
+config.json

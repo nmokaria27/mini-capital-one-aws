@@ -1,0 +1,28 @@
+{
+  "testUsers": [
+    {
+      "fullName": "John Doe",
+      "dob": "1990-05-15",
+      "email": "john.doe@example.com",
+      "initialBalance": 1000.00
+    },
+    {
+      "fullName": "Jane Smith",
+      "dob": "1985-08-22",
+      "email": "jane.smith@example.com",
+      "initialBalance": 5000.00
+    }
+  ],
+  "testTransactions": [
+    {
+      "userId": "REPLACE_WITH_ACTUAL_USER_ID",
+      "transactionType": "deposit",
+      "amount": 500.00
+    },
+    {
+      "userId": "REPLACE_WITH_ACTUAL_USER_ID",
+      "transactionType": "withdrawal",
+      "amount": 200.00
+    }
+  ]
+}

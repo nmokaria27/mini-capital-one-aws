@@ -1,0 +1,46 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*"
+    },
+    {
+      "Sid": "DynamoDBAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:PutItem",
+        "dynamodb:GetItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+      ],
+      "Resource": "arn:aws:dynamodb:*:*:table/CapitalOne-Users"
+    },
+    {
+      "Sid": "RDSAccess",
+      "Effect": "Allow",
+      "Action": [
+        "rds-data:ExecuteStatement",
+        "rds-data:BatchExecuteStatement"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "VPCAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateNetworkInterface",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DeleteNetworkInterface"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

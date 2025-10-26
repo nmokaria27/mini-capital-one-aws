@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capital One Banking System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Capital One Banking</h1>
+            <p>Secure Online Banking</p>
+        </header>
+
+        <!-- User Registration Section -->
+        <section id="registration" class="card">
+            <h2>Create Account</h2>
+            <form id="registrationForm">
+                <input type="text" id="fullName" placeholder="Full Name" required>
+                <input type="date" id="dob" placeholder="Date of Birth" required>
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="number" id="initialBalance" placeholder="Initial Balance" min="0" step="0.01" required>
+                <button type="submit">Create Account</button>
+            </form>
+        </section>
+
+        <!-- Transaction Section -->
+        <section id="transactions" class="card">
+            <h2>Make Transaction</h2>
+            <form id="transactionForm">
+                <input type="text" id="userId" placeholder="User ID" required>
+                <select id="transactionType" required>
+                    <option value="">Select Transaction Type</option>
+                    <option value="deposit">Deposit</option>
+                    <option value="withdrawal">Withdrawal</option>
+                </select>
+                <input type="number" id="amount" placeholder="Amount" min="0.01" step="0.01" required>
+                <button type="submit">Submit Transaction</button>
+            </form>
+        </section>
+
+        <!-- Account Balance Section -->
+        <section id="balance" class="card">
+            <h2>Check Balance</h2>
+            <input type="text" id="balanceUserId" placeholder="User ID">
+            <button onclick="checkBalance()">Check Balance</button>
+            <div id="balanceDisplay"></div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
