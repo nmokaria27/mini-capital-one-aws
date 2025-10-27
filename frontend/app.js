@@ -2,6 +2,9 @@
 // If your stage is $default, do NOT add a stage suffix.
 const API_BASE = "https://wmg52t8w3j.execute-api.us-east-1.amazonaws.com";
 
+// Store current user ID
+let currentUserId = null;
+
 // ---------- Helpers ----------
 async function httpPost(url, payload) {
   const res = await fetch(url, {
@@ -38,10 +41,28 @@ document.getElementById("registrationForm").addEventListener("submit", async (e)
 
   try {
     const data = await httpPost(`${API_BASE}/users`, userData);
-    alert(`Account created! User ID: ${data.userId}\nStarting balance: $${Number(data.balance).toFixed(2)}`);
-    // Optionally stash userId for convenience
-    const userIdInput = document.getElementById("userId");
-    if (userIdInput) userIdInput.value = data.userId;
+    currentUserId = data.userId;
+    
+    // Show success message with copy option
+    const copyPrompt = confirm(`Account created successfully!\n\nUser ID: ${data.userId}\nStarting balance: $${Number(data.balance).toFixed(2)}\n\nClick OK to copy your User ID to clipboard.`);
+    
+    if (copyPrompt) {
+      navigator.clipboard.writeText(data.userId).then(() => {
+        alert("User ID copied to clipboard!");
+      }).catch(() => {
+        alert("Could not copy automatically. Your User ID is: " + data.userId);
+      });
+    }
+    
+    // Show user ID banner and unlock features
+    document.getElementById("displayedUserId").textContent = data.userId;
+    document.getElementById("userIdDisplay").style.display = "block";
+    document.getElementById("transactions").style.display = "block";
+    document.getElementById("balance").style.display = "block";
+    
+    // Hide registration form
+    document.getElementById("registration").style.display = "none";
+    
     document.getElementById("registrationForm").reset();
   } catch (err) {
     console.error("CreateUser failed:", err);
@@ -49,22 +70,42 @@ document.getElementById("registrationForm").addEventListener("submit", async (e)
   }
 });
 
+// ---------- Copy User ID ----------
+document.getElementById("copyUserIdBtn").addEventListener("click", () => {
+  if (currentUserId) {
+    navigator.clipboard.writeText(currentUserId).then(() => {
+      const btn = document.getElementById("copyUserIdBtn");
+      const originalText = btn.textContent;
+      btn.textContent = "✓ Copied!";
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 2000);
+    }).catch(() => {
+      alert("Could not copy. Your User ID is: " + currentUserId);
+    });
+  }
+});
+
 // ---------- Transactions ----------
 document.getElementById("transactionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const userId = document.getElementById("userId").value.trim();
-  const txTypeRaw = document.getElementById("transactionType").value; // e.g., "deposit" | "withdraw"
+  if (!currentUserId) {
+    alert("Please create an account first.");
+    return;
+  }
+
+  const txTypeRaw = document.getElementById("transactionType").value;
   const amountNum = Number(document.getElementById("amount").value);
 
-  if (!userId || !txTypeRaw || isNaN(amountNum) || amountNum <= 0) {
-    alert("Please enter a valid User ID, transaction type, and positive amount.");
+  if (!txTypeRaw || isNaN(amountNum) || amountNum <= 0) {
+    alert("Please select a transaction type and enter a positive amount.");
     return;
   }
 
   // Lambda expects keys: userId, type ("DEPOSIT"/"WITHDRAW"), amount (number)
   const payload = {
-    userId,
+    userId: currentUserId,
     type: txTypeRaw.toUpperCase() === "DEPOSIT" ? "DEPOSIT" : "WITHDRAW",
     amount: amountNum,
   };
@@ -80,24 +121,20 @@ document.getElementById("transactionForm").addEventListener("submit", async (e) 
 });
 
 // ---------- Check Balance ----------
-document.getElementById("balanceForm")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  
-  const userId = document.getElementById("balanceUserId").value.trim();
-  
-  if (!userId) {
-    alert("Please enter a User ID.");
+document.getElementById("checkBalanceBtn")?.addEventListener("click", async () => {
+  if (!currentUserId) {
+    alert("Please create an account first.");
     return;
   }
 
   try {
-    const res = await fetch(`${API_BASE}/users/${userId}`, {
+    const res = await fetch(`${API_BASE}/users/${currentUserId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" }
     });
     
     const text = await res.text();
-    console.log("GET balance", `${API_BASE}/users/${userId}`, "status:", res.status, "body:", text);
+    console.log("GET balance", `${API_BASE}/users/${currentUserId}`, "status:", res.status, "body:", text);
     
     if (!res.ok) {
       const error = text ? JSON.parse(text).error : `HTTP ${res.status}`;
