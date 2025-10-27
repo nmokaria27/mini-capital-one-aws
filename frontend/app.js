@@ -1,108 +1,90 @@
-// API Gateway endpoints - UPDATE THESE AFTER DEPLOYMENT
+// ==== SET THIS TO YOUR API GATEWAY INVOKE URL ====
+// If your stage is $default, do NOT add a stage suffix.
+// If your stage is "prod", include "/prod" at the end.
+const API_BASE = "https://<your-api-id>.execute-api.us-east-1.amazonaws.com"; // or .../prod
 
-const API_BASE = "http://capitalone-banking-app.s3-website-us-east-1.amazonaws.com"
+// ---------- Helpers ----------
+async function httpPost(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const text = await res.text();
+  // Helpful logging while debugging:
+  console.log("POST", url, "status:", res.status, "body:", text);
+  if (!res.ok) {
+    // try to surface Lambda's error payload if JSON
+    try { throw new Error(JSON.parse(text).error || text); }
+    catch { throw new Error(text || `HTTP ${res.status}`); }
+  }
+  return text ? JSON.parse(text) : {};
+}
 
+// ---------- Create User ----------
+document.getElementById("registrationForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const userData = {
+    fullName: document.getElementById("fullName").value.trim(),
+    dob: document.getElementById("dob").value, // YYYY-MM-DD
+    email: document.getElementById("email").value.trim(),
+    initialBalance: Number(document.getElementById("initialBalance").value),
+  };
 
+  // Basic client-side validation
+  if (!userData.fullName || !userData.dob || !userData.email || isNaN(userData.initialBalance)) {
+    alert("Please fill all fields correctly.");
+    return;
+  }
 
-const API_ENDPOINTS = {
-    createUser: 'YOUR_API_GATEWAY_URL/createUser',
-    transaction: 'YOUR_API_GATEWAY_URL/transaction',
-    getBalance: 'YOUR_API_GATEWAY_URL/getBalance'
-};
-
-// Handle User Registration
-document.getElementById('registrationForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const userData = {
-        fullName: document.getElementById('fullName').value,
-        dob: document.getElementById('dob').value,
-        email: document.getElementById('email').value,
-        initialBalance: parseFloat(document.getElementById('initialBalance').value)
-    };
-
-    try {
-        async function createUser(payload) {
-        const res = await fetch(`${API_BASE}/users`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        return res.json();
-        }
-
-        const result = await response.json();
-        
-        if (response.ok) {
-            alert(`Account created successfully! Your User ID: ${result.userId}`);
-            document.getElementById('registrationForm').reset();
-        } else {
-            alert('Error creating account: ' + result.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to create account. Please try again.');
-    }
+  try {
+    const data = await httpPost(`${API_BASE}/users`, userData);
+    alert(`Account created! User ID: ${data.userId}\nStarting balance: $${Number(data.balance).toFixed(2)}`);
+    // Optionally stash userId for convenience
+    const userIdInput = document.getElementById("userId");
+    if (userIdInput) userIdInput.value = data.userId;
+    document.getElementById("registrationForm").reset();
+  } catch (err) {
+    console.error("CreateUser failed:", err);
+    alert("Failed to create account. Please check console (F12 → Console) for details.");
+  }
 });
 
-// Handle Transactions
-document.getElementById('transactionForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const transactionData = {
-        userId: document.getElementById('userId').value,
-        transactionType: document.getElementById('transactionType').value,
-        amount: parseFloat(document.getElementById('amount').value)
-    };
+// ---------- Transactions ----------
+document.getElementById("transactionForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    try {
-        const response = await fetch(API_ENDPOINTS.transaction, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(transactionData)
-        });
+  const userId = document.getElementById("userId").value.trim();
+  const txTypeRaw = document.getElementById("transactionType").value; // e.g., "deposit" | "withdraw"
+  const amountNum = Number(document.getElementById("amount").value);
 
-        const result = await response.json();
-        
-        if (response.ok) {
-            alert(`Transaction successful! New balance: $${result.newBalance}`);
-            document.getElementById('transactionForm').reset();
-        } else {
-            alert('Transaction failed: ' + result.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Transaction failed. Please try again.');
-    }
+  if (!userId || !txTypeRaw || isNaN(amountNum) || amountNum <= 0) {
+    alert("Please enter a valid User ID, transaction type, and positive amount.");
+    return;
+  }
+
+  // Lambda expects keys: userId, type ("DEPOSIT"/"WITHDRAW"), amount (number)
+  const payload = {
+    userId,
+    type: txTypeRaw.toUpperCase() === "DEPOSIT" ? "DEPOSIT" : "WITHDRAW",
+    amount: amountNum,
+  };
+
+  try {
+    const data = await httpPost(`${API_BASE}/transactions`, payload);
+    alert(`Transaction successful! New balance: $${Number(data.balance).toFixed(2)}\nTxn ID: ${data.transactionId}`);
+    document.getElementById("transactionForm").reset();
+  } catch (err) {
+    console.error("Transaction failed:", err);
+    alert(`Transaction failed: ${err.message || err}`);
+  }
 });
 
-// Check Balance
+// ---------- Check Balance (TODO) ----------
+// We haven't implemented a GET balance endpoint yet.
+// Leaving this as a placeholder so your UI doesn't break.
+// When Team B adds e.g. GET /users/{userId} or GET /balance?userId=...,
+// update the fetch URL accordingly.
 async function checkBalance() {
-    const userId = document.getElementById('balanceUserId').value;
-    
-    if (!userId) {
-        alert('Please enter a User ID');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_ENDPOINTS.getBalance}?userId=${userId}`);
-        const result = await response.json();
-        
-        if (response.ok) {
-            document.getElementById('balanceDisplay').innerHTML = `
-                <strong>Account Balance:</strong> $${result.balance.toFixed(2)}<br>
-                <strong>Account Holder:</strong> ${result.fullName}
-            `;
-        } else {
-            document.getElementById('balanceDisplay').innerHTML = 
-                `<span style="color: red;">Error: ${result.message}</span>`;
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('balanceDisplay').innerHTML = 
-            '<span style="color: red;">Failed to fetch balance</span>';
-    }
+  alert("Balance lookup not implemented yet. Ask your teammate to add a GET endpoint (e.g., GET /users/{userId}).");
 }
