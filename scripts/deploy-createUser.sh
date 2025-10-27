@@ -29,6 +29,9 @@ if aws lambda get-function --function-name $FUNCTION_NAME --region $REGION 2>/de
     --zip-file fileb://createUser.zip \
     --region $REGION
   
+  echo "⏳ Waiting for Lambda to be ready..."
+  aws lambda wait function-updated --function-name $FUNCTION_NAME --region $REGION
+  
   echo "⚙️  Updating configuration..."
   aws lambda update-function-configuration \
     --function-name $FUNCTION_NAME \
