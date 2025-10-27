@@ -1,0 +1,10 @@
+{
+  "name": "get-balance-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function to retrieve user balance from DynamoDB",
+  "type": "module",
+  "main": "index.mjs",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0"
+  }
+}

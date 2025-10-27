@@ -79,11 +79,35 @@ document.getElementById("transactionForm").addEventListener("submit", async (e) 
   }
 });
 
-// ---------- Check Balance (TODO) ----------
-// We haven't implemented a GET balance endpoint yet.
-// Leaving this as a placeholder so your UI doesn't break.
-// When Team B adds e.g. GET /users/{userId} or GET /balance?userId=...,
-// update the fetch URL accordingly.
-async function checkBalance() {
-  alert("Balance lookup not implemented yet. Ask your teammate to add a GET endpoint (e.g., GET /users/{userId}).");
-}
+// ---------- Check Balance ----------
+document.getElementById("balanceForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  
+  const userId = document.getElementById("balanceUserId").value.trim();
+  
+  if (!userId) {
+    alert("Please enter a User ID.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" }
+    });
+    
+    const text = await res.text();
+    console.log("GET balance", `${API_BASE}/users/${userId}`, "status:", res.status, "body:", text);
+    
+    if (!res.ok) {
+      const error = text ? JSON.parse(text).error : `HTTP ${res.status}`;
+      throw new Error(error);
+    }
+    
+    const data = JSON.parse(text);
+    alert(`User: ${data.fullName}\nEmail: ${data.email}\nBalance: $${Number(data.balance).toFixed(2)}\nLast Updated: ${new Date(data.updatedAt).toLocaleString()}`);
+  } catch (err) {
+    console.error("Balance check failed:", err);
+    alert(`Failed to check balance: ${err.message || err}`);
+  }
+});

@@ -43,9 +43,10 @@
         <!-- Account Balance Section -->
         <section id="balance" class="card">
             <h2>Check Balance</h2>
-            <input type="text" id="balanceUserId" placeholder="User ID">
-            <button onclick="checkBalance()">Check Balance</button>
-            <div id="balanceDisplay"></div>
+            <form id="balanceForm">
+                <input type="text" id="balanceUserId" placeholder="User ID" required>
+                <button type="submit">Check Balance</button>
+            </form>
         </section>
     </div>
 
