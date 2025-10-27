@@ -1,0 +1,11 @@
+{
+  "name": "create-user-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function to create user profiles in DynamoDB",
+  "type": "module",
+  "main": "index.mjs",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "uuid": "^9.0.0"
+  }
+}
