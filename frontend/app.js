@@ -1,7 +1,6 @@
 // ==== SET THIS TO YOUR API GATEWAY INVOKE URL ====
 // If your stage is $default, do NOT add a stage suffix.
-// If your stage is "prod", include "/prod" at the end.
-const API_BASE = "https://<your-api-id>.execute-api.us-east-1.amazonaws.com"; // or .../prod
+const API_BASE = "https://y85zq1ex6c.execute-api.us-east-1.amazonaws.com";
 
 // ---------- Helpers ----------
 async function httpPost(url, payload) {
