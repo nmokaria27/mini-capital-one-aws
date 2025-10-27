@@ -1,4 +1,9 @@
 // API Gateway endpoints - UPDATE THESE AFTER DEPLOYMENT
+
+const API_BASE = "http://capitalone-banking-app.s3-website-us-east-1.amazonaws.com"
+
+
+
 const API_ENDPOINTS = {
     createUser: 'YOUR_API_GATEWAY_URL/createUser',
     transaction: 'YOUR_API_GATEWAY_URL/transaction',
@@ -17,13 +22,14 @@ document.getElementById('registrationForm').addEventListener('submit', async (e)
     };
 
     try {
-        const response = await fetch(API_ENDPOINTS.createUser, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData)
+        async function createUser(payload) {
+        const res = await fetch(`${API_BASE}/users`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
         });
+        return res.json();
+        }
 
         const result = await response.json();
         

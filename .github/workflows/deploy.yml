@@ -1,0 +1,22 @@
+name: Deploy frontend to S3
+on:
+  push:
+    branches: [ main ]    # or 'master' if that's your default
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Sync files to S3
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --follow-symlinks --delete
+        env:
+          AWS_S3_BUCKET: capitalone-banking-app-neel
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SOURCE_DIR: frontend        # path to your index.html/app.js
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
