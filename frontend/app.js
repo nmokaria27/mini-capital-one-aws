@@ -62,6 +62,12 @@ document.getElementById("registrationForm").addEventListener("submit", async (e)
     document.getElementById("balance").style.display = "block";
     document.getElementById("statements").style.display = "block";
     
+    // Set initial balance display
+    document.getElementById("balanceValue").textContent = `$${Number(data.balance).toFixed(2)}`;
+    document.getElementById("balanceName").textContent = userData.fullName;
+    document.getElementById("balanceEmail").textContent = userData.email;
+    document.getElementById("balanceUpdated").textContent = new Date().toLocaleString();
+    
     // Show notification status
     if (data.emailNotifications) {
       console.log("Email notifications enabled for this account");
@@ -119,8 +125,12 @@ document.getElementById("transactionForm").addEventListener("submit", async (e) 
 
   try {
     const data = await httpPost(`${API_BASE}/transactions`, payload);
-    alert(`Transaction successful! New balance: $${Number(data.balance).toFixed(2)}\nTxn ID: ${data.transactionId}`);
+    alert(`Transaction successful!\nNew balance: $${Number(data.balance).toFixed(2)}\nTxn ID: ${data.transactionId}`);
     document.getElementById("transactionForm").reset();
+    
+    // Auto-refresh balance display after transaction
+    document.getElementById("balanceValue").textContent = `$${Number(data.balance).toFixed(2)}`;
+    document.getElementById("balanceUpdated").textContent = new Date().toLocaleString();
   } catch (err) {
     console.error("Transaction failed:", err);
     alert(`Transaction failed: ${err.message || err}`);
@@ -128,9 +138,8 @@ document.getElementById("transactionForm").addEventListener("submit", async (e) 
 });
 
 // ---------- Check Balance ----------
-document.getElementById("checkBalanceBtn")?.addEventListener("click", async () => {
+async function refreshBalance() {
   if (!currentUserId) {
-    alert("Please create an account first.");
     return;
   }
 
@@ -149,10 +158,38 @@ document.getElementById("checkBalanceBtn")?.addEventListener("click", async () =
     }
     
     const data = JSON.parse(text);
-    alert(`User: ${data.fullName}\nEmail: ${data.email}\nBalance: $${Number(data.balance).toFixed(2)}\nLast Updated: ${new Date(data.updatedAt).toLocaleString()}`);
+    
+    // Update balance display on page
+    document.getElementById("balanceValue").textContent = `$${Number(data.balance).toFixed(2)}`;
+    document.getElementById("balanceName").textContent = data.fullName || "-";
+    document.getElementById("balanceEmail").textContent = data.email || "-";
+    document.getElementById("balanceUpdated").textContent = data.updatedAt ? new Date(data.updatedAt).toLocaleString() : "-";
+    
+    return data;
   } catch (err) {
     console.error("Balance check failed:", err);
+    document.getElementById("balanceValue").textContent = "Error";
+    throw err;
+  }
+}
+
+document.getElementById("checkBalanceBtn")?.addEventListener("click", async () => {
+  if (!currentUserId) {
+    alert("Please create an account first.");
+    return;
+  }
+  
+  const btn = document.getElementById("checkBalanceBtn");
+  btn.textContent = "Refreshing...";
+  btn.disabled = true;
+  
+  try {
+    await refreshBalance();
+  } catch (err) {
     alert(`Failed to check balance: ${err.message || err}`);
+  } finally {
+    btn.textContent = "Refresh Balance";
+    btn.disabled = false;
   }
 });
 

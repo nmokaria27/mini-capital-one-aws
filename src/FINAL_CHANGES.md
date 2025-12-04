@@ -324,3 +324,13 @@ git push origin main
 - Updated frontend with notification preferences and statement download
 - Created deployment scripts for all new services
 - Added comprehensive IAM policy for new permissions
+
+### 2024-12-04 (Update 2)
+- Changed getStatement to generate statements on-demand instead of fetching monthly
+- Fixed IAM permissions: added dynamodb:GetItem for getStatement Lambda
+- Updated frontend UI:
+  - Balance now displays inline on page instead of popup alert
+  - Balance auto-refreshes after each transaction
+  - Statement text updated to reflect on-demand generation
+- Added CSS styling for balance display card
+- Note: SES sandbox mode requires recipient email verification for notifications

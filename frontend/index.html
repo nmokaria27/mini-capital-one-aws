@@ -54,14 +54,25 @@
 
         <!-- Account Balance Section (hidden until account created) -->
         <section id="balance" class="card" style="display: none;">
-            <h2>Check Balance</h2>
-            <button id="checkBalanceBtn" type="button">Check My Balance</button>
+            <h2>Account Balance</h2>
+            <div id="balanceDisplay" class="balance-display">
+                <div class="balance-amount">
+                    <span class="balance-label">Current Balance</span>
+                    <span id="balanceValue" class="balance-value">$0.00</span>
+                </div>
+                <div class="balance-details">
+                    <p><strong>Name:</strong> <span id="balanceName">-</span></p>
+                    <p><strong>Email:</strong> <span id="balanceEmail">-</span></p>
+                    <p><strong>Last Updated:</strong> <span id="balanceUpdated">-</span></p>
+                </div>
+            </div>
+            <button id="checkBalanceBtn" type="button">Refresh Balance</button>
         </section>
 
         <!-- Statement Section (hidden until account created) -->
         <section id="statements" class="card" style="display: none;">
             <h2>Account Statements</h2>
-            <p class="statement-info">Monthly statements are generated on the 1st of each month.</p>
+            <p class="statement-info">Click below to generate and download your latest account statement.</p>
             <button id="downloadStatementBtn" type="button">Download Latest Statement</button>
             <div id="statementStatus" class="status-message" style="display: none;"></div>
         </section>
