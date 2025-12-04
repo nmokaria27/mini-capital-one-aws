@@ -31,6 +31,7 @@ document.getElementById("registrationForm").addEventListener("submit", async (e)
     dob: document.getElementById("dob").value, // YYYY-MM-DD
     email: document.getElementById("email").value.trim(),
     initialBalance: Number(document.getElementById("initialBalance").value),
+    emailNotifications: document.getElementById("emailNotifications").checked,
   };
 
   // Basic client-side validation
@@ -59,6 +60,12 @@ document.getElementById("registrationForm").addEventListener("submit", async (e)
     document.getElementById("userIdDisplay").style.display = "block";
     document.getElementById("transactions").style.display = "block";
     document.getElementById("balance").style.display = "block";
+    document.getElementById("statements").style.display = "block";
+    
+    // Show notification status
+    if (data.emailNotifications) {
+      console.log("Email notifications enabled for this account");
+    }
     
     // Hide registration form
     document.getElementById("registration").style.display = "none";
@@ -147,4 +154,57 @@ document.getElementById("checkBalanceBtn")?.addEventListener("click", async () =
     console.error("Balance check failed:", err);
     alert(`Failed to check balance: ${err.message || err}`);
   }
+});
+
+// ---------- Download Statement ----------
+document.getElementById("downloadStatementBtn")?.addEventListener("click", async () => {
+  if (!currentUserId) {
+    alert("Please create an account first.");
+    return;
+  }
+
+  const statusDiv = document.getElementById("statementStatus");
+  statusDiv.style.display = "block";
+  statusDiv.textContent = "Fetching statement...";
+  statusDiv.className = "status-message loading";
+
+  try {
+    const res = await fetch(`${API_BASE}/statements/${currentUserId}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" }
+    });
+    
+    const text = await res.text();
+    console.log("GET statement", `${API_BASE}/statements/${currentUserId}`, "status:", res.status, "body:", text);
+    
+    if (!res.ok) {
+      const errorData = text ? JSON.parse(text) : {};
+      throw new Error(errorData.message || errorData.error || `HTTP ${res.status}`);
+    }
+    
+    const data = JSON.parse(text);
+    
+    if (data.latestStatement && data.latestStatement.url) {
+      // Open statement in new tab
+      window.open(data.latestStatement.url, '_blank');
+      statusDiv.textContent = "Statement opened in new tab!";
+      statusDiv.className = "status-message success";
+      
+      // Show available statements count
+      if (data.availableStatements && data.availableStatements.length > 1) {
+        statusDiv.textContent += ` (${data.availableStatements.length} statements available)`;
+      }
+    } else {
+      throw new Error("No statement URL returned");
+    }
+  } catch (err) {
+    console.error("Statement download failed:", err);
+    statusDiv.textContent = err.message || "Failed to download statement";
+    statusDiv.className = "status-message error";
+  }
+  
+  // Hide status after 5 seconds
+  setTimeout(() => {
+    statusDiv.style.display = "none";
+  }, 5000);
 });

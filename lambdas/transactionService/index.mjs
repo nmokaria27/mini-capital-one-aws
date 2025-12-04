@@ -1,7 +1,10 @@
-// index.mjs - Transaction service WITHOUT RDS (DynamoDB only)
-// This version works without RDS for basic functionality
+// index.mjs - Transaction service with SNS notifications
+// Updated for Final Project: Publishes transaction events to SNS
 import { DynamoDBClient, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 import { v4 as uuidv4 } from "uuid";
+
+const sns = new SNSClient({});
 
 const ddb = new DynamoDBClient({});
 
@@ -63,8 +66,64 @@ export const handler = async (event) => {
     // Generate transaction ID
     const txnId = uuidv4();
 
-    // NOTE: RDS transaction logging is disabled because RDS is in different region
-    // To enable: Create RDS in us-east-1 and uncomment the RDS code in index-with-rds.mjs
+    // Get user details for notification
+    const userDetails = await ddb.send(new GetItemCommand({
+      TableName: process.env.DYNAMODB_TABLE_NAME,
+      Key: { userId: { S: userId } },
+      ProjectionExpression: "email, fullName, emailNotifications"
+    }));
+
+    // Store transaction in history (for statement generation)
+    try {
+      await ddb.send(new UpdateItemCommand({
+        TableName: process.env.DYNAMODB_TABLE_NAME,
+        Key: { userId: { S: userId } },
+        UpdateExpression: "SET transactionHistory = list_append(if_not_exists(transactionHistory, :empty), :tx)",
+        ExpressionAttributeValues: {
+          ":empty": { L: [] },
+          ":tx": { L: [{
+            M: {
+              type: { S: type },
+              amount: { N: amt.toFixed(2) },
+              balanceAfter: { N: newBal.toFixed(2) },
+              timestamp: { S: now },
+              transactionId: { S: txnId }
+            }
+          }]}
+        }
+      }));
+    } catch (historyErr) {
+      console.warn("Failed to update transaction history:", historyErr);
+      // Don't fail the transaction if history update fails
+    }
+
+    // Publish to SNS for email notification (if enabled)
+    const emailNotificationsEnabled = userDetails.Item?.emailNotifications?.BOOL !== false;
+    const userEmail = userDetails.Item?.email?.S;
+    const fullName = userDetails.Item?.fullName?.S;
+
+    if (process.env.SNS_TOPIC_ARN && emailNotificationsEnabled && userEmail) {
+      try {
+        await sns.send(new PublishCommand({
+          TopicArn: process.env.SNS_TOPIC_ARN,
+          Message: JSON.stringify({
+            userId,
+            email: userEmail,
+            fullName,
+            transactionType: type,
+            amount: amt,
+            newBalance: newBal,
+            timestamp: now,
+            transactionId: txnId
+          }),
+          Subject: `Capital One: ${type} Transaction Alert`
+        }));
+        console.log("SNS notification published for user:", userId);
+      } catch (snsErr) {
+        console.warn("Failed to publish SNS notification:", snsErr);
+        // Don't fail the transaction if notification fails
+      }
+    }
 
     return { 
       statusCode: 200, 
@@ -72,7 +131,7 @@ export const handler = async (event) => {
       body: JSON.stringify({ 
         balance: newBal, 
         transactionId: txnId,
-        note: "Transaction recorded in DynamoDB. RDS logging disabled (cross-region)."
+        notificationSent: emailNotificationsEnabled && !!userEmail
       }) 
     };
   } catch (err) {

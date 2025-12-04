@@ -1,54 +1,88 @@
-# Capital One Banking (Serverless)
+# Capital One Banking System
 
-A minimal serverless banking app demonstrating user creation, balance checks, and transactions on AWS.
+A serverless banking application built with AWS services, featuring user account creation, balance management, and transaction processing.
 
-## Live
-- Frontend: https://main.d39rly73pvywwe.amplifyapp.com
-- API Base: https://wmg52t8w3j.execute-api.us-east-1.amazonaws.com
+## 🚀 Live Demo
 
-## Features
-- Create account with initial balance
-- Deposit and withdraw with atomic balance updates
-- Check balance (real-time)
+- **Frontend**: https://main.d39rly73pvywwe.amplifyapp.com
+- **API Endpoint**: https://wmg52t8w3j.execute-api.us-east-1.amazonaws.com
 
-## Services Used
-- Amplify (hosting)
-- API Gateway (HTTP API)
-- Lambda (Node.js 18, ES modules)
-- DynamoDB (user profiles + balances)
-- IAM + CloudWatch (security, logs)
+## ✨ Features
 
-## Endpoints
-- POST /users
-- GET /users/{userId}
-- POST /transactions
+- **User Account Creation** - Create banking accounts with initial balance
+- **Balance Checking** - View current account balance in real-time
+- **Transactions** - Deposit and withdraw funds with atomic balance updates
+- **Secure Authentication** - User ID-based session management
+- **Real-time Updates** - Instant balance updates after transactions
 
-## Structure
+## 🏗️ Architecture
+
+### AWS Services
+- **AWS Amplify** - Frontend hosting with CI/CD
+- **API Gateway** - HTTP API for RESTful endpoints
+- **Lambda** - Serverless functions (Node.js 18)
+- **DynamoDB** - NoSQL database for user data and balances
+- **IAM** - Role-based access control
+- **CloudWatch** - Logging and monitoring
+
+### API Endpoints
 ```
-frontend/              # Web UI (HTML/CSS/JS)
-lambdas/
-  createUser/         # POST /users
-  getBalance/         # GET /users/{userId}
-  transactionService/ # POST /transactions
-database/             # Schemas (DynamoDB, MySQL)
-scripts/              # Deployment helpers
-iam/                  # IAM policies
+POST   /users              - Create new user account
+GET    /users/{userId}     - Get user balance and info
+POST   /transactions       - Process deposit/withdrawal
 ```
 
-## Quick Start
-- Prereqs: AWS CLI, Node.js 18+
-- Deploy Lambdas: run scripts in scripts/
-- Add routes: ./scripts/setup-missing-routes.sh
-- Push to main to auto-deploy frontend via Amplify
+## 📁 Project Structure
 
-## Tech Stack
-- Frontend: Vanilla JS, HTML, CSS
-- Backend: AWS Lambda (Node 18, ESM)
-- Data: DynamoDB (on-demand)
-- API: API Gateway (HTTP)
+```
+├── frontend/              # Web application (HTML/CSS/JS)
+├── lambdas/              # Lambda function code
+│   ├── createUser/       # User creation service
+│   ├── getBalance/       # Balance retrieval service
+│   └── transactionService/ # Transaction processing
+├── database/             # Database schemas
+├── scripts/              # Deployment automation scripts
+└── iam/                  # IAM policies
+```
 
-## License
-MIT
+## 🛠️ Tech Stack
+
+- **Frontend**: Vanilla JavaScript, HTML5, CSS3
+- **Backend**: AWS Lambda (Node.js 18, ES Modules)
+- **Database**: DynamoDB (on-demand billing)
+- **API**: AWS API Gateway (HTTP API)
+- **Hosting**: AWS Amplify
+- **CI/CD**: GitHub + Amplify auto-deploy
+
+## 💰 Cost
+
+**$0/month** - All services within AWS Free Tier
+
+## 🚀 Quick Start
+
+### Prerequisites
+- AWS Account
+- AWS CLI configured
+- Node.js 18+
+
+### Deployment
+
+1. **Deploy Lambda Functions**
+```bash
+./scripts/deploy-createUser.sh
+./scripts/deploy-getBalance.sh
+./scripts/deploy-transactionService.sh
+```
+
+2. **Setup API Gateway Routes**
+```bash
+./scripts/setup-missing-routes.sh
+```
+
+3. **Deploy Frontend**
+```bash
+git push origin main  # Amplify auto-deploys
+```
 
 ## 📝 Usage
 

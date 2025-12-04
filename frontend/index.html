@@ -30,6 +30,10 @@
                 <input type="date" id="dob" placeholder="Date of Birth" required>
                 <input type="email" id="email" placeholder="Email" required>
                 <input type="number" id="initialBalance" placeholder="Initial Balance" min="0" step="0.01" required>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="emailNotifications" checked>
+                    <label for="emailNotifications">Receive email notifications for transactions</label>
+                </div>
                 <button type="submit">Create Account</button>
             </form>
         </section>
@@ -52,6 +56,14 @@
         <section id="balance" class="card" style="display: none;">
             <h2>Check Balance</h2>
             <button id="checkBalanceBtn" type="button">Check My Balance</button>
+        </section>
+
+        <!-- Statement Section (hidden until account created) -->
+        <section id="statements" class="card" style="display: none;">
+            <h2>Account Statements</h2>
+            <p class="statement-info">Monthly statements are generated on the 1st of each month.</p>
+            <button id="downloadStatementBtn" type="button">Download Latest Statement</button>
+            <div id="statementStatus" class="status-message" style="display: none;"></div>
         </section>
     </div>
 
