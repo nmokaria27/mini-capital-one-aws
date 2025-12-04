@@ -6,8 +6,8 @@ This document tracks all changes made for the final submission, adding 4 new AWS
 ## New AWS Services Added
 1. **SNS (Simple Notification Service)** - Publishes transaction events
 2. **SES (Simple Email Service)** - Sends email notifications to users
-3. **S3** - Stores monthly account statements
-4. **EventBridge** - Schedules monthly statement generation
+3. **S3** - Stores account statements (on-demand via API, and monthly via EventBridge)
+4. **EventBridge** - Optionally schedules monthly statement generation
 
 ## Architecture Changes
 
@@ -25,6 +25,7 @@ User → API Gateway → Lambda → DynamoDB
                   sendNotification Lambda → SES → Email
 
 EventBridge (Monthly) → generateStatement Lambda → S3 Bucket
+getStatement Lambda → S3 Bucket
 ```
 
 ---
@@ -36,8 +37,8 @@ EventBridge (Monthly) → generateStatement Lambda → S3 Bucket
 | File | Purpose |
 |------|---------|
 | `lambdas/sendNotification/index.mjs` | Receives SNS events, sends emails via SES |
-| `lambdas/generateStatement/index.mjs` | Generates monthly statements, uploads to S3 |
-| `lambdas/getStatement/index.mjs` | Returns pre-signed S3 URL for statement download |
+| `lambdas/generateStatement/index.mjs` | Generates monthly statements for all users, uploads to S3 (EventBridge) |
+| `lambdas/getStatement/index.mjs` | Generates an on-demand statement for a single user, uploads to S3, returns pre-signed URL |
 
 ### New Scripts
 
@@ -91,10 +92,10 @@ EventBridge (Monthly) → generateStatement Lambda → S3 Bucket
 - Verify sender email address
 - Verify recipient emails (sandbox mode)
 
-### 4. EventBridge Rule
+### 4. EventBridge Rule (Optional)
 - **Name**: `MonthlyStatementGenerator`
 - **Schedule**: `cron(0 8 1 * ? *)`
-- **Target**: generateStatement Lambda
+- **Target**: generateStatement Lambda (bulk monthly statements)
 
 ---
 
@@ -131,8 +132,15 @@ EventBridge (Monthly) → generateStatement Lambda → S3 Bucket
 ```json
 {
   "Effect": "Allow",
-  "Action": "s3:GetObject",
-  "Resource": "arn:aws:s3:::capitalone-statements-*/*"
+  "Action": [
+    "dynamodb:GetItem",
+    "s3:PutObject",
+    "s3:GetObject"
+  ],
+  "Resource": [
+    "arn:aws:dynamodb:us-east-1:*:table/CapitalOne-Users",
+    "arn:aws:s3:::capitalone-statements-*/*"
+  ]
 }
 ```
 
@@ -147,7 +155,8 @@ EventBridge (Monthly) → generateStatement Lambda → S3 Bucket
 - `DYNAMODB_TABLE_NAME` - CapitalOne-Users
 - `S3_BUCKET_NAME` - capitalone-statements-{id}
 
-### getStatement Lambda
+### getStatement Lambda (On-demand)
+- `DYNAMODB_TABLE_NAME` - CapitalOne-Users
 - `S3_BUCKET_NAME` - capitalone-statements-{id}
 
 ### transactionService Lambda (Updated)
@@ -160,7 +169,7 @@ EventBridge (Monthly) → generateStatement Lambda → S3 Bucket
 
 | Method | Path | Lambda | Description |
 |--------|------|--------|-------------|
-| GET | `/statements/{userId}` | getStatement | Returns pre-signed S3 URL |
+| GET | `/statements/{userId}` | getStatement | Generates a fresh statement on-demand and returns a pre-signed S3 URL |
 
 ---
 
@@ -168,9 +177,9 @@ EventBridge (Monthly) → generateStatement Lambda → S3 Bucket
 
 - [ ] Create user with email notifications enabled
 - [ ] Make transaction → verify email received
-- [ ] Trigger statement generation manually
-- [ ] Download statement from S3
-- [ ] Verify EventBridge rule triggers on schedule
+- [ ] Click "Download Statement" immediately after a transaction and confirm the statement reflects the latest balance/transactions
+- [ ] (Optional) Trigger monthly statement generation manually for all users
+- [ ] (Optional) Verify EventBridge rule triggers on schedule
 
 ---
 
@@ -252,7 +261,7 @@ aws sns subscribe \
 ./update-transactionService.sh
 ```
 
-### Step 8: Setup EventBridge Rule
+### Step 8: Setup EventBridge Rule (Optional)
 ```bash
 # Get generateStatement Lambda ARN
 LAMBDA_ARN=$(aws lambda get-function --function-name generateStatement --query 'Configuration.FunctionArn' --output text)
@@ -278,11 +287,11 @@ git push origin main
 1. Create a new user with email notifications enabled
 2. Make a transaction (deposit/withdrawal)
 3. Check your email for notification
-4. Manually trigger statement generation:
+4. Click "Download Statement" in the app and confirm it opens an HTML statement that reflects the latest transaction
+5. (Optional) Manually trigger bulk monthly generation:
    ```bash
    aws lambda invoke --function-name generateStatement /dev/stdout
    ```
-5. Click "Download Statement" in the app
 
 ---
 

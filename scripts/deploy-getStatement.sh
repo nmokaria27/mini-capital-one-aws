@@ -10,6 +10,7 @@ RUNTIME="nodejs18.x"
 HANDLER="index.handler"
 TIMEOUT=30
 MEMORY=128
+DYNAMODB_TABLE="CapitalOne-Users"
 
 echo "=========================================="
 echo "Deploying $FUNCTION_NAME Lambda"
@@ -61,10 +62,10 @@ if echo "$FUNCTION_EXISTS" | grep -q "ResourceNotFoundException"; then
         --zip-file fileb://function.zip \
         --timeout $TIMEOUT \
         --memory-size $MEMORY \
-        --environment "Variables={S3_BUCKET_NAME=$S3_BUCKET_NAME}" \
+        --environment "Variables={S3_BUCKET_NAME=$S3_BUCKET_NAME,DYNAMODB_TABLE_NAME=$DYNAMODB_TABLE}" \
         --region $REGION
     
-    echo "✅ Lambda function created"
+    echo " Lambda function created"
 else
     echo "Updating existing Lambda function..."
     aws lambda update-function-code \
@@ -75,10 +76,10 @@ else
     # Update environment variables
     aws lambda update-function-configuration \
         --function-name $FUNCTION_NAME \
-        --environment "Variables={S3_BUCKET_NAME=$S3_BUCKET_NAME}" \
+        --environment "Variables={S3_BUCKET_NAME=$S3_BUCKET_NAME,DYNAMODB_TABLE_NAME=$DYNAMODB_TABLE}" \
         --region $REGION
     
-    echo "✅ Lambda function updated"
+    echo " Lambda function updated"
 fi
 
 # Clean up
